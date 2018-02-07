@@ -1,0 +1,111 @@
+var express = require('express');
+var bodyParser= require('body-parser');
+var mongojs = require("mongojs");
+var db= mongojs('data', ['data']);
+port = process.env.PORT || 3000;
+
+var app= express();
+var cors=require('cors');
+
+app.use(cors({origin: '*'}));
+app.use(bodyParser.json());
+var filePath='/api/data'
+
+
+app.get('/', function(req, res, next){
+	res.send('Hello World');
+
+});
+
+//Get all Items
+app.get('/api/data', function(req, res, next){
+	//res.send('List data');
+	db.data.find( function(err, docs){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('data found!');
+		res.json(docs);
+
+	});
+
+});
+
+//Fetch Single Item
+app.get('/api/data/:id', function(req, res, next){
+	//res.send('Get one item'+req.params.id);
+	db.data.findOne({_id: mongojs.ObjectId(req.params.id)}, function(err, doc){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('product found!');
+		res.json(doc);
+
+	});
+
+});
+
+
+//Submit data to API
+app.post('/api/data', function(req, res, next){
+	//res.send('Add Item');
+	db.data.insert(req.body, function(err, doc){
+	console.log(req.body);
+	if(err)
+	{
+		res.send(err);
+	}
+	console.log('Adding Product');
+	res.json(doc);
+	});
+});
+
+//Update an item
+app.put('/api/data/:id', function(req, res, next){
+	//res.send('Update product '+req.params.id);
+	db.data.findAndModify({query: {_id: mongojs.ObjectId(req.params.id)},update:{
+		$set:{
+			//Name:req.body.Name,
+			//ID:req.body.ID,
+			//StartTime:req.body.StartTime,
+
+			//more fields in here
+		}
+	},new: true}, function(err,doc){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('item modified');
+		res.json(doc);
+	})
+
+});
+
+
+//Delete an item
+app.delete('/api/data/:id', function(req, res, next){
+	//res.send('Delete: '+req.params.id);
+	db.data.remove({_id: mongojs.ObjectId(req.params.id)},function(err,doc){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('Removing Product');
+		res.json(doc);
+	});
+});
+
+//Enable cross domain resource utility, essentially making a public API. weeee
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
+
+app.listen(port,'0.0.0.0', function(){
+	console.log("Server started on port "+ port);
+});
