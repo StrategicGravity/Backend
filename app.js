@@ -48,15 +48,15 @@ app.get('/api/jobs/:id', function(req, res, next){
 });
 
 //fetch an item by p_Name
-app.get('/api/jobs/findByName/:p_Name', function(req, res, next){
+app.get('/api/jobs/findByName/:p_fName', function(req, res, next){
 	//res.send('Get one item'+req.params.id);
-	console.log(req.params.p_Name);
-	db.jobs.find({p_Name: ''+req.params.p_Name}, function(err, docs){
-		if(err)
+	console.log('test'+req.params.p_fName);
+	db.jobs.find({p_fName: req.params.p_fName}, function(err, docs){
+		if(err) 
 		{
 			res.send(err);
 		}
-		console.log('product found!');
+		console.log('search executed');
 		res.json(docs);
 
 	});
@@ -115,26 +115,21 @@ app.put('/api/jobs/:id', function(req, res, next){
 	//res.send('Update job '+req.params.id);
 	db.jobs.findAndModify({query: {_id: mongojs.ObjectId(req.params.id)},update:{
 		$set:{
-			//Name:req.body.Name,
-			//ID:req.body.ID,
-			//StartTime:req.body.StartTime,
 
+			//Need to fill in additional feilds
 			p_fName: req.body.p_fName,
 			p_lName: req.body.p_lName,
 			p_ID: req.body.p_ID,
 			p_Email: req.body.p_Email,
-			p_FileName: req.body.p_FileName,
 			p_Phone: req.body.p_Phone,
-			p_MakerNameA: req.body.p_MakerNameA,
-			p_MakerNameP: req.body.p_MakerNameP,
-			p_Date: req.body.p_Date,
-			//Time_S: req.body.Time_S,
-			//Time_F: req.body.Time_F,
-			p_Infill: req.body.p_Infill,
 			p_Filament: req.body.p_Filament,
-			p_Success: req.body.p_Success,
-			Comment: req.body.Comment,
-			//more fields in here
+			p_Infill: req.body.p_Infill,
+			p_Instructions: req.body.p_Instructions,			
+			p_Mass: req.body.p_Mass,			
+			p_Hours: req.body.p_Hours,			
+			p_Minutes: req.body.p_Minutes,			
+			p_ReviewNotes: req.body.p_ReviewNotes,			
+			p_Approved: req.body.p_Approved
 		}
 	},new: true}, function(err,doc){
 		if(err)
