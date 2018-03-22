@@ -2,6 +2,8 @@ var express = require('express');
 var bodyParser= require('body-parser');
 var mongojs = require("mongojs");
 var db= mongojs('print_db', ['jobs']);
+var staff=mongojs('login_db', ['logins']);
+
 port = process.env.PORT || 3000;
 
 var app= express();
@@ -32,6 +34,34 @@ app.get('/api/jobs', function(req, res, next){
 
 });
 
+//get all logins
+app.get('/api/logins', function(req, res, next){
+	//res.send('List active print jobs');
+	staff.logins.find( function(err, docs){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('Work requests found!');
+		res.json(docs);
+
+	});
+
+});
+//Submit data to Login DB
+app.post('/api/logins', function(req, res, next){
+	//res.send('Add Item');
+	staff.logins.insert(req.body, function(err, doc){
+	if(err)
+	{
+		res.send(err);
+	}
+	console.log('Adding login');
+	res.json(doc);
+	});
+});
+
+
 //Fetch Single Item
 app.get('/api/jobs/:id', function(req, res, next){
 	//res.send('Get one item'+req.params.id);
@@ -50,7 +80,7 @@ app.get('/api/jobs/:id', function(req, res, next){
 //fetch an item by p_Name
 app.get('/api/jobs/findByName/:p_fName', function(req, res, next){
 	//res.send('Get one item'+req.params.id);
-	console.log('test'+req.params.p_fName);
+	//console.log('test'+req.params.p_fName);
 	db.jobs.find({p_fName: req.params.p_fName}, function(err, docs){
 		if(err) 
 		{
@@ -65,7 +95,7 @@ app.get('/api/jobs/findByName/:p_fName', function(req, res, next){
 //Fetch an item by student ID
 app.get('/api/jobs/findByID/:p_ID', function(req, res, next){
 	//res.send('Get one item'+req.params.id);
-	console.log(req.params.p_Name);
+	//console.log(req.params.p_Name);
 	db.jobs.find({p_ID: req.params.p_ID}, function(err, docs){
 		if(err)
 		{
@@ -78,7 +108,88 @@ app.get('/api/jobs/findByID/:p_ID', function(req, res, next){
 
 });
 
-//Fetch an item by print compelte status
+
+//Fetch an item by Review Status
+app.get('/api/jobs/findByReviewStatus/:isReviewed', function(req, res, next){
+	//res.send('Get one item'+req.params.id);
+	//console.log(req.params.isReviewed +' findByReviewStatus');
+	//Booleans are transmitted as strings
+	var boolean;
+	if(req.params.isReviewed=='true')
+	{
+		boolean=true;
+	}
+	else
+	{
+		boolean=false;
+	}
+	db.jobs.find({p_isReviewed: boolean}, function(err, docs){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('job found!');
+		res.json(docs);
+
+	});
+
+});
+
+//Fetch an item by approved status
+app.get('/api/jobs/findByApprovalStatus/:isApproved', function(req, res, next){
+	//res.send('Get one item'+req.params.id);
+	//console.log(req.params.isReviewed +' findByReviewStatus');
+	//Booleans are transmitted as strings
+	var boolean;
+	if(req.params.isApproved=='true')
+	{
+		boolean=true;
+	}
+	else
+	{
+		boolean=false;
+	}
+	db.jobs.find({p_Approved: boolean}, function(err, docs){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('job found!');
+		res.json(docs);
+
+	});
+
+});
+
+//Fetch an item by complete status
+app.get('/api/jobs/findByPrintComplete/:isComplete', function(req, res, next){
+	//res.send('Get one item'+req.params.id);
+	//console.log(req.params.isReviewed +' findByReviewStatus');
+	//Booleans are transmitted as strings
+	var boolean;
+	if(req.params.isComplete=='true')
+	{
+		boolean=true;
+	}
+	else
+	{
+		boolean=false;
+	}
+	console.log(boolean);
+
+	db.jobs.find({p_isComplete: boolean}, function(err, docs){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('job found!');
+		res.json(docs);
+
+	});
+
+});
+
+//Fetch an item by form compelte status
 app.get('/api/jobs/findByFormStatus/:form_Complete', function(req, res, next){
 	//res.send('Get one item'+req.params.id);
 	console.log(req.params.form_Complete);
@@ -128,7 +239,9 @@ app.put('/api/jobs/:id', function(req, res, next){
 			p_Mass: req.body.p_Mass,			
 			p_Hours: req.body.p_Hours,			
 			p_Minutes: req.body.p_Minutes,			
-			p_ReviewNotes: req.body.p_ReviewNotes,			
+			p_ReviewNotes: req.body.p_ReviewNotes,
+			p_isReviewed: req.body.p_isReviewed,
+			p_isComplete: req.body.p_isComplete,			
 			p_Approved: req.body.p_Approved
 		}
 	},new: true}, function(err,doc){
