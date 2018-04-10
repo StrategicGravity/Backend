@@ -1,17 +1,24 @@
 var express = require('express');
 var bodyParser= require('body-parser');
 var mongojs = require("mongojs");
+var gridform = require('gridform');
+var Binary = require('mongodb').Binary;
 var db= mongojs('print_db', ['jobs']);
 var staff=mongojs('login_db', ['logins']);
 
-port = process.env.PORT || 3000;
+gridform.db=db;
+
+
+const formidable = require('express-formidable');
+
+port = process.env.PORT || 443;
 
 var app= express();
 var cors=require('cors');
 
 app.use(cors({origin: '*'}));
 app.use(bodyParser.json());
-
+app.use(formidable());
 
 
 app.get('/', function(req, res, next){
@@ -216,7 +223,7 @@ app.post('/api/jobs', function(req, res, next){
 	{
 		res.send(err);
 	}
-	console.log('Adding print');
+	console.log('Adding data');
 	res.json(doc);
 	});
 });
@@ -255,6 +262,26 @@ app.put('/api/jobs/:id', function(req, res, next){
 
 });
 
+
+//Update Attempts
+app.put('/api/jobs/logAttempts/:id', function(req, res, next){
+	//res.send('Update job '+req.params.id);
+	db.jobs.findAndModify({query: {_id: mongojs.ObjectId(req.params.id)},update:{
+		$set:{
+
+			p_Attempts: req.body.p_Attempts,
+			p_isComplete: true
+		}
+	},new: true}, function(err,doc){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('item modified');
+		res.json(doc);
+	})
+
+});
 
 //Delete an item
 app.delete('/api/jobs/:id', function(req, res, next){
