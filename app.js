@@ -32,7 +32,7 @@ var upload  = multer({storage: storage});
 
 
 app.get('/', function(req, res, next){
-	res.send('Hello World');
+	res.send('Thank you for your submission!');
 
 });
 
@@ -237,6 +237,7 @@ app.post('/api/jobs', upload.single('file'), function(req, res, next){
 			var euid=req.body.p_ID;
 			var email=req.body.p_Email;
 			var phone=req.body.p_Phone;
+			var jobType=req.body.p_JobType;
 			var filament=req.body.p_Filament;
 			var infill=req.body.p_Infill;
 			var instruction=req.body.p_Instructions;
@@ -253,6 +254,7 @@ app.post('/api/jobs', upload.single('file'), function(req, res, next){
 				p_ID:  euid, 
 				p_Email:  email,
 				p_Phone:  phone,
+				p_JobType :jobType,
 				p_Filament: filament,
 				p_Infill : infill,
 				p_Instructions: instruction,
@@ -260,7 +262,9 @@ app.post('/api/jobs', upload.single('file'), function(req, res, next){
 				p_Hours : hours,
 				p_Minutes: minutes,
 				p_ReviewNotes : reviewNotes,
+				p_isReviewed : false,
 				p_Approved : approved,
+				p_isComplete : false,
 				p_FileName:  file
 			};
 
@@ -271,7 +275,7 @@ app.post('/api/jobs', upload.single('file'), function(req, res, next){
 					res.send(err);
 				}
 				console.log('Adding data');
-				res.json(doc);
+				res.redirect('back');
 			});
 		});
 
