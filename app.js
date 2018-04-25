@@ -1,24 +1,34 @@
 var express = require('express');
 var bodyParser= require('body-parser');
 var mongojs = require("mongojs");
-var gridform = require('gridform');
-var Binary = require('mongodb').Binary;
 var db= mongojs('print_db', ['jobs']);
 var staff=mongojs('login_db', ['logins']);
+var multer  = require('multer');
+var path    = require('path');
+var uuidv4  = require('uuid/v4')
 
-gridform.db=db;
 
 
-const formidable = require('express-formidable');
 
-port = process.env.PORT || 443;
+port = process.env.PORT || 8000;
 
 var app= express();
 var cors=require('cors');
 
 app.use(cors({origin: '*'}));
 app.use(bodyParser.json());
-app.use(formidable());
+
+app.use(express.static(__dirname + '/public'));
+
+
+// Multer setup
+var storage = multer.diskStorage({
+	destination: './public/uploads/',
+	filename: function(req, file, callback) {
+		callback(null, uuidv4() + path.extname(file.originalname));
+	}
+});
+var upload  = multer({storage: storage});
 
 
 app.get('/', function(req, res, next){
@@ -59,12 +69,12 @@ app.get('/api/logins', function(req, res, next){
 app.post('/api/logins', function(req, res, next){
 	//res.send('Add Item');
 	staff.logins.insert(req.body, function(err, doc){
-	if(err)
-	{
-		res.send(err);
-	}
-	console.log('Adding login');
-	res.json(doc);
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('Adding login');
+		res.json(doc);
 	});
 });
 
@@ -216,17 +226,54 @@ app.get('/api/jobs/findByFormStatus/:form_Complete', function(req, res, next){
 
 
 //Submit data to API
-app.post('/api/jobs', function(req, res, next){
+app.post('/api/jobs', upload.single('file'), function(req, res, next){
 	//res.send('Add Item');
-	db.jobs.insert(req.body, function(err, doc){
-	if(err)
-	{
-		res.send(err);
+	if(!req.file) {
+		res.redirect('back');
 	}
-	console.log('Adding data');
-	res.json(doc);
-	});
-});
+
+			var fName=req.body.p_fName;
+			var lName=req.body.p_lName;
+			var euid=req.body.p_ID;
+			var email=req.body.p_Email;
+			var phone=req.body.p_Phone;
+			var filament=req.body.p_Filament;
+			var infill=req.body.p_Infill;
+			var instruction=req.body.p_Instructions;
+			var mass=0;
+			var hours=0;
+			var minutes=0;
+			var reviewNotes='none';
+			var approved=false;
+			var file=req.file.filename;
+
+			var job = {
+				p_fName: fName, 
+				p_lName:  lName, 
+				p_ID:  euid, 
+				p_Email:  email,
+				p_Phone:  phone,
+				p_Filament: filament,
+				p_Infill : infill,
+				p_Instructions: instruction,
+				p_Mass :mass,
+				p_Hours : hours,
+				p_Minutes: minutes,
+				p_ReviewNotes : reviewNotes,
+				p_Approved : approved,
+				p_FileName:  file
+			};
+
+
+			db.jobs.insert(job, function(err, doc){
+				if(err)
+				{
+					res.send(err);
+				}
+				console.log('Adding data');
+				res.json(doc);
+			});
+		});
 
 //Update an item
 app.put('/api/jobs/:id', function(req, res, next){
@@ -298,9 +345,9 @@ app.delete('/api/jobs/:id', function(req, res, next){
 
 //Enable cross domain resource utility, essentially making a public API. weeee
 app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
+	res.header("Access-Control-Allow-Origin", "*");
+	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+	next();
 });
 
 
