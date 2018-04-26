@@ -265,6 +265,7 @@ app.post('/api/jobs', upload.single('file'), function(req, res, next){
 				p_isReviewed : false,
 				p_Approved : approved,
 				p_isComplete : false,
+				p_isPickedUp: false,
 				p_FileName:  file
 			};
 
