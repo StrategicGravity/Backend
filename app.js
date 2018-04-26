@@ -78,8 +78,20 @@ app.post('/api/logins', function(req, res, next){
 	});
 });
 
+//Delete an login
+app.delete('/api/login/:id', function(req, res, next){
+	//res.send('Delete: '+req.params.id);
+	staff.logins.remove({_id: mongojs.ObjectId(req.params.id)},function(err,doc){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('Removing ID');
+		res.json(doc);
+	});
+});
 
-//Fetch Single Item
+//Fetch Single Job
 app.get('/api/jobs/:id', function(req, res, next){
 	//res.send('Get one item'+req.params.id);
 	db.jobs.findOne({_id: mongojs.ObjectId(req.params.id)}, function(err, doc){
@@ -89,6 +101,22 @@ app.get('/api/jobs/:id', function(req, res, next){
 		}
 		console.log('product found!');
 		res.json(doc);
+
+	});
+
+});
+
+//fetch an login by p_Name
+app.get('/api/login/findByName/:s_UserName', function(req, res, next){
+	//res.send('Get one item'+req.params.id);
+	//console.log('test'+req.params.p_fName);
+	staff.logins.findOne({s_UserName: req.params.s_UserName}, function(err, docs){
+		if(err) 
+		{
+			res.send(err);
+		}
+		console.log('search executed');
+		res.json(docs);
 
 	});
 
