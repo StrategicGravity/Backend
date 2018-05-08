@@ -10,7 +10,7 @@ var uuidv4  = require('uuid/v4')
 
 
 
-port = process.env.PORT || 8000;
+port = process.env.PORT || 443;
 
 var app= express();
 var cors=require('cors');
@@ -105,6 +105,21 @@ app.get('/api/jobs/:id', function(req, res, next){
 	});
 
 });
+//fetch an login by Mongo ID
+app.get('/api/login/:id', function(req, res, next){
+	//res.send('Get one item'+req.params.id);
+	//console.log('test'+req.params.p_fName);
+	staff.logins.findOne({_id: mongojs.ObjectId(req.params.id)}, function(err, docs){
+		if(err) 
+		{
+			res.send(err);
+		}
+		console.log('search executed');
+		res.json(docs);
+
+	});
+
+});
 
 //fetch an login by p_Name
 app.get('/api/login/findByName/:s_UserName', function(req, res, next){
@@ -152,6 +167,37 @@ app.get('/api/jobs/findByID/:p_ID', function(req, res, next){
 	});
 
 });
+
+//Fetch an item by submission status
+app.get('/api/jobs/findByNew/newQueue', function(req, res, next){
+
+	db.jobs.find({p_isReviewed: false}, function(err, docs){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('job found!');
+		res.json(docs);
+
+	});
+
+});
+
+//Fetch an item by Review Status
+app.get('/api/jobs/findByPending/pendingQueue', function(req, res, next){
+	console.log('err');
+	db.jobs.find({p_isReviewed: true, p_isApproved: true, p_isComplete: false}, function(err, docs){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log(docs);
+		res.json(docs);
+
+	});
+
+});
+
 
 
 //Fetch an item by Review Status
@@ -260,53 +306,63 @@ app.post('/api/jobs', upload.single('file'), function(req, res, next){
 		res.redirect('back');
 	}
 
-			var fName=req.body.p_fName;
-			var lName=req.body.p_lName;
-			var euid=req.body.p_ID;
-			var email=req.body.p_Email;
-			var phone=req.body.p_Phone;
-			var jobType=req.body.p_JobType;
-			var filament=req.body.p_Filament;
-			var infill=req.body.p_Infill;
-			var instruction=req.body.p_Instructions;
-			var mass=0;
-			var hours=0;
-			var minutes=0;
-			var reviewNotes='none';
-			var approved=false;
-			var file=req.file.filename;
+	var fName=req.body.p_fName;
+	var lName=req.body.p_lName;
+	var euid=req.body.p_ID;
+	var email=req.body.p_Email;
+	var phone=req.body.p_Phone;
+	var jobType=req.body.p_JobType;
+	var filament=req.body.p_Filament;
+	var infill=req.body.p_Infill;
+	var instruction=req.body.p_Instructions;
+	var mass=0;
+	var hours=0;
+	var minutes=0;
+	var reviewNotes='none';
+	var pickupLocation=req.body.p_PickUpLocation;
+	var file=req.file.filename;
+	console.log(pickupLocation);
+	var job = {
+		p_fName: fName, 
+		p_lName:  lName, 
+		p_ID:  euid, 
+		p_Email:  email,
+		p_Phone:  phone,
+		p_JobType :jobType,
+		p_Filament: filament,
+		p_Infill : infill,
+		p_Instructions: instruction,
+		p_Mass :mass,
+		p_Hours : hours,
+		p_Minutes: minutes,
+		p_ReviewNotes : reviewNotes,
+		p_isReviewed : false,
+		p_ReviewLogin:'none',
+		p_ReviewDate:'nan',
+		p_Approved : false,
+		p_ApprovedLogin:'none',
+		p_ApprovedDate:'nan',
+		p_isComplete : false,
+		p_CompleteLogin:'none',
+		p_CompleteDate:'none',
+		p_isPickedUp: false,
+		p_PickUpLogin:'none',
+		p_PickUpDate:'nan',
+		p_PickUpLocation: pickupLocation,
+		p_FileName:  file
+	};
 
-			var job = {
-				p_fName: fName, 
-				p_lName:  lName, 
-				p_ID:  euid, 
-				p_Email:  email,
-				p_Phone:  phone,
-				p_JobType :jobType,
-				p_Filament: filament,
-				p_Infill : infill,
-				p_Instructions: instruction,
-				p_Mass :mass,
-				p_Hours : hours,
-				p_Minutes: minutes,
-				p_ReviewNotes : reviewNotes,
-				p_isReviewed : false,
-				p_Approved : approved,
-				p_isComplete : false,
-				p_isPickedUp: false,
-				p_FileName:  file
-			};
-
-
-			db.jobs.insert(job, function(err, doc){
-				if(err)
-				{
-					res.send(err);
-				}
-				console.log('Adding data');
-				res.redirect('back');
-			});
-		});
+	console.log('Form Recieved');
+	console.log(job);
+	db.jobs.insert(job, function(err, doc){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('Adding data');
+		res.redirect('back');
+	});
+});
 
 //Update an item
 app.put('/api/jobs/:id', function(req, res, next){
@@ -337,20 +393,21 @@ app.put('/api/jobs/:id', function(req, res, next){
 			res.send(err);
 		}
 		console.log('item modified');
+		console.log(doc);
 		res.json(doc);
 	})
 
 });
-
-
-//Update Attempts
-app.put('/api/jobs/logAttempts/:id', function(req, res, next){
+//Update an login
+app.put('/api/logins/:id', function(req, res, next){
 	//res.send('Update job '+req.params.id);
-	db.jobs.findAndModify({query: {_id: mongojs.ObjectId(req.params.id)},update:{
+	staff.logins.findAndModify({query: {_id: mongojs.ObjectId(req.params.id)},update:{
 		$set:{
 
-			p_Attempts: req.body.p_Attempts,
-			p_isComplete: true
+			s_UserName :req.body.s_UserName,
+			s_Password: req.body.s_Password,
+			s_Name: req.body.s_Name,
+			s_Permission : req.body.s_Permission
 		}
 	},new: true}, function(err,doc){
 		if(err)
@@ -363,6 +420,56 @@ app.put('/api/jobs/logAttempts/:id', function(req, res, next){
 
 });
 
+
+//Update Attempts
+app.put('/api/jobs/logAttempts/:id', function(req, res, next){
+	//res.send('Update job '+req.params.id);
+	var date=new Date();
+	db.jobs.findAndModify({query: {_id: mongojs.ObjectId(req.params.id)},update:{
+		$set:{
+
+			p_Attempts: req.body.p_Attempts,
+			p_isComplete: true,
+			p_CompleteDate: date,
+			p_CompleteLogin: req.body.p_CompleteLogin
+		}
+	},new: true}, function(err,doc){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('item modified');
+		console.log(doc);
+		res.json(doc);
+	})
+
+});
+
+//Update Review
+app.put('/api/jobs/logReview/:id', function(req, res, next){
+	//res.send('Update job '+req.params.id);
+	var date=new Date();
+	db.jobs.findAndModify({query: {_id: mongojs.ObjectId(req.params.id)},update:{
+		$set:{
+			p_Mass: req.body.p_Mass,
+			p_Hours: req.body.p_Hours,
+			p_Minutes: req.body.p_Minutes,
+			p_ReviewNotes: req.body.p_ReviewNotes,
+			p_isReviewed: true,
+			p_ReviewDate: date,
+			p_ReviewLogin: req.body.p_ReviewLogin
+		}
+	},new: true}, function(err,doc){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('item modified');
+		console.log(doc);
+		res.json(doc);
+	})
+
+});
 //Delete an item
 app.delete('/api/jobs/:id', function(req, res, next){
 	//res.send('Delete: '+req.params.id);
