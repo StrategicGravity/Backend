@@ -3,6 +3,8 @@ var bodyParser= require('body-parser');
 var mongojs = require("mongojs");
 var db= mongojs('print_db', ['jobs']);
 var staff=mongojs('login_db', ['logins']);
+var filament=mongojs('roll_db', ['rolls']);
+
 var multer  = require('multer');
 var path    = require('path');
 var uuidv4  = require('uuid/v4')
@@ -32,8 +34,7 @@ var upload  = multer({storage: storage});
 
 
 app.get('/', function(req, res, next){
-	res.send('Thank you for your submission!');
-
+	//res.send('Thank you for your submission!');
 });
 
 //Get all Items
@@ -50,6 +51,62 @@ app.get('/api/jobs', function(req, res, next){
 	});
 
 });
+
+//Get All Rolls
+app.get('/api/rolls', function(req, res, next){
+	//res.send('List active print jobs');
+	filament.rolls.find( function(err, docs){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('Work requests found!');
+		res.json(docs);
+
+	});
+
+});
+
+//Submit data to Rolls DB
+app.post('/api/rolls', function(req, res, next){
+	//res.send('Add Item');
+	filament.rolls.insert(req.body, function(err, doc){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('Adding Roll');
+		res.json(doc);
+	});
+});
+
+//Fetch Single Roll
+app.get('/api/rolls/:id', function(req, res, next){
+	//res.send('Get one item'+req.params.id);
+	filament.rolls.findOne({_id: mongojs.ObjectId(req.params.id)}, function(err, doc){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('roll found!');
+		res.json(doc);
+
+	});
+});
+
+//Delete an roll
+app.delete('/api/rolls/:id', function(req, res, next){
+	//res.send('Delete: '+req.params.id);
+	filament.rolls.remove({_id: mongojs.ObjectId(req.params.id)},function(err,doc){
+		if(err)
+		{
+			res.send(err);
+		}
+		console.log('Removing Roll');
+		res.json(doc);
+	});
+});
+
 
 //get all logins
 app.get('/api/logins', function(req, res, next){
@@ -77,6 +134,8 @@ app.post('/api/logins', function(req, res, next){
 		res.json(doc);
 	});
 });
+
+
 
 //Delete an login
 app.delete('/api/login/:id', function(req, res, next){
@@ -186,7 +245,7 @@ app.get('/api/jobs/findByNew/newQueue', function(req, res, next){
 //Fetch an item by Review Status
 app.get('/api/jobs/findByPending/pendingQueue', function(req, res, next){
 	console.log('err');
-	db.jobs.find({p_isReviewed: true, p_isApproved: true, p_isComplete: false}, function(err, docs){
+	db.jobs.find({p_isReviewed: true, p_Approved: true, p_isComplete: false}, function(err, docs){
 		if(err)
 		{
 			res.send(err);
@@ -457,6 +516,7 @@ app.put('/api/jobs/logReview/:id', function(req, res, next){
 			p_ReviewNotes: req.body.p_ReviewNotes,
 			p_isReviewed: true,
 			p_ReviewDate: date,
+			p_Approved: req.body.p_Approved,
 			p_ReviewLogin: req.body.p_ReviewLogin
 		}
 	},new: true}, function(err,doc){
